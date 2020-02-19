@@ -1,0 +1,5 @@
+avro-python3
+Django<3
+djangorestframework
+protobuf
+requests

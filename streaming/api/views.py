@@ -1,13 +1,13 @@
 from io import BytesIO
 
-import avro
-from avro.datafile import DataFileWriter
-from avro.io import DatumWriter
-from django.http import StreamingHttpResponse
+from avro.io import DatumWriter, BinaryEncoder
+from avro.schema import SchemaFromJSONData
+from django.http import HttpResponse
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api import api_pb2
+from api.avro_schema import avro_api_schema
 from api.services import DataSource
 
 
@@ -20,22 +20,22 @@ class JSONView(APIView):
 
 def avro_view(request):
     data = DataSource().data
-    schema = avro.schema.Parse(open("api/api.avsc", "rb").read())
     buffer = BytesIO()
-    writer = avro.io.DatumWriter(schema)
-    encoder = avro.io.BinaryEncoder(buffer)
-    for item in data:
-        writer.write(item, encoder)
-    response = StreamingHttpResponse(buffer.getvalue(), content_type='avro/binary')
-    return response
+
+    schema = SchemaFromJSONData(avro_api_schema)
+    writer = DatumWriter(schema)
+    encoder = BinaryEncoder(buffer)
+    writer.write(data, encoder)
+
+    return HttpResponse(buffer.getvalue(), content_type='application/octet-stream')
 
 
 def protobuf_view(request):
     response = api_pb2.Response()
     for data in DataSource().data:
         item = response.items.add()
-        item.text = data['text']
-        item.number = data['number']
+        for key, val in data.items():
+            setattr(item, key, val)
 
-    return StreamingHttpResponse(response.SerializeToString(), content_type='text/plain')
+    return HttpResponse(response.SerializeToString(), content_type='application/octet-stream')
 
