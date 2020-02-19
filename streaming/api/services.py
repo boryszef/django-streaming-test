@@ -1,6 +1,11 @@
+import cProfile
+import io
+import pstats
+
+
 class DataSource(object):
 
-    _size = 1000
+    _size = 100000
     _data = None
 
     def __init__(self):
@@ -19,3 +24,15 @@ class DataSource(object):
             }
             for idx in range(self._size)
         ]
+
+
+def profile_me(func):
+    def wrapper(*args, **kwargs):
+        profiler = cProfile.Profile()
+        profiler.enable()
+        output = func(*args, **kwargs)
+        profiler.disable()
+        ps = pstats.Stats(profiler).sort_stats('cumulative')
+        ps.print_stats(3)
+        return output
+    return wrapper

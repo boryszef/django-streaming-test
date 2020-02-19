@@ -19,17 +19,20 @@ class TestRunner(TestCase):
 
     def test_drf(self):
         response = requests.get('http://127.0.0.1:8000/drf/')
+        print("drf - response size = {}".format(len(response.content)))
         content = response.json()
         self._assert(content)
 
     def test_avro(self):
         response = requests.get('http://127.0.0.1:8000/avro/')
+        print("avro - response size = {}".format(len(response.content)))
         content = self._decode_avro(response.content)
         self._assert(content)
 
     def test_protobuf(self):
         response = requests.get('http://127.0.0.1:8000/pb/')
-        content = self._decode_protobuf(response)
+        print("protobuf - response size = {}".format(len(response.content)))
+        content = self._decode_protobuf(response.content)
         self._assert(content)
 
     @staticmethod
@@ -42,9 +45,9 @@ class TestRunner(TestCase):
         return content
 
     @staticmethod
-    def _decode_protobuf(response):
+    def _decode_protobuf(content):
         model = api_pb2.Response()
-        model.ParseFromString(response.content)
+        model.ParseFromString(content)
         content = [
             {'text': item.text, 'number': item.number}
             for item in model.items

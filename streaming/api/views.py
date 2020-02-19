@@ -8,16 +8,18 @@ from rest_framework.views import APIView
 
 from api import api_pb2
 from api.avro_schema import avro_api_schema
-from api.services import DataSource
+from api.services import DataSource, profile_me
 
 
 class JSONView(APIView):
 
+    @profile_me
     def get(self, request):
         data = DataSource().data
         return Response(data)
 
 
+@profile_me
 def avro_view(request):
     data = DataSource().data
     buffer = BytesIO()
@@ -30,6 +32,7 @@ def avro_view(request):
     return HttpResponse(buffer.getvalue(), content_type='application/octet-stream')
 
 
+@profile_me
 def protobuf_view(request):
     response = api_pb2.Response()
     for data in DataSource().data:
