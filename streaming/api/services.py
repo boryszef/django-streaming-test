@@ -5,7 +5,7 @@ import pstats
 
 class DataSource(object):
 
-    _size = 100000
+    _size = 500000
     _data = None
 
     def __init__(self):

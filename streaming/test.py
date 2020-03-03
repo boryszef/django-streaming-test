@@ -1,13 +1,15 @@
 import io
 
 import requests
+import simplejson as json
 from avro.io import BinaryDecoder, DatumReader
 from avro.schema import SchemaFromJSONData
-from django.test import TestCase
+from django.test import TestCase, RequestFactory
 
 from api import api_pb2
 from api.avro_schema import avro_api_schema
 from api.services import DataSource
+from api.views import JSONView, avro_view, protobuf_view
 
 
 class TestRunner(TestCase):
@@ -18,19 +20,24 @@ class TestRunner(TestCase):
             self.assertDictEqual(c, e)
 
     def test_drf(self):
-        response = requests.get('http://127.0.0.1:8000/drf/')
+        request = RequestFactory().get('http://127.0.0.1:8000/drf/?format=json')
+        view = JSONView.as_view()
+        response = view(request)
+        response.render()
         print("drf - response size = {}".format(len(response.content)))
-        content = response.json()
+        content = json.loads(response.content)
         self._assert(content)
 
     def test_avro(self):
-        response = requests.get('http://127.0.0.1:8000/avro/')
+        request = RequestFactory().get('http://127.0.0.1:8000/avro/')
+        response = avro_view(request)
         print("avro - response size = {}".format(len(response.content)))
         content = self._decode_avro(response.content)
         self._assert(content)
 
     def test_protobuf(self):
-        response = requests.get('http://127.0.0.1:8000/pb/')
+        request = RequestFactory().get('http://127.0.0.1:8000/pb/')
+        response = protobuf_view(request)
         print("protobuf - response size = {}".format(len(response.content)))
         content = self._decode_protobuf(response.content)
         self._assert(content)
